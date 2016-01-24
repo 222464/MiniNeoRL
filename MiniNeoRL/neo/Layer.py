@@ -91,7 +91,7 @@ class Layer:
         self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
 
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward - self._statesRecurrent, self._statesPrev.T)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrent, self._statesPrev.T)
 
         # Update predictive and feed back weights
         self._predictiveWeights += learnDecoderRate * np.dot(predError, self._statesPrev.T)
@@ -114,7 +114,7 @@ class Layer:
         self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
 
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward - self._statesRecurrent, self._statesPrev.T)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrent, self._statesPrev.T)
 
         # Update predictive and feed back weights
         self._predictiveTraces = self._predictiveTraces * traceDecay + np.dot(predError, self._statesPrev.T)
