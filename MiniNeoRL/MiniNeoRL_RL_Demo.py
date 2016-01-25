@@ -16,11 +16,11 @@ paddleX = 0.5
 ballRadius = 16.0 / displayWidth
 paddleRadius = 64.0 / displayWidth
 
-encoderSize = 8
-numInputs = 5
+encoderSize = 20
+numInputs = 1
 numActions = 1
 
-a = Agent(numInputs * encoderSize, numActions, [ 40 ], -0.1, 0.1, 0.1)
+a = Agent(numInputs * encoderSize, numActions, [ 200 ], -0.1, 0.1, 0.02)
 
 averageReward = 0.0
 
@@ -100,13 +100,13 @@ while not done:
     averageReward = 0.99 * averageReward + 0.01 * reward
 
     # Control
-    inputs = [ paddleX * 2.0 - 1.0, ballPosition[0] * 2.0 - 1.0, ballPosition[1] * 2.0 - 1.0, ballVelocity[0] * 30.0, ballVelocity[1] * 30.0 ]
+    inputs = [ paddleX * 2.0 - 1.0 ]#, ballPosition[0] * 2.0 - 1.0, ballPosition[1] * 2.0 - 1.0, ballVelocity[0] * 30.0, ballVelocity[1] * 30.0 ]
 
     assert(len(inputs) == numInputs)
 
     inputArr = []
 
-    encoderSharpness = 20.0
+    encoderSharpness = 100.0
 
     for v in inputs:
         for i in range(0, encoderSize):
@@ -123,7 +123,7 @@ while not done:
 
     reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward * 0.5 + 0.5, 0.3, 0.1, np.matrix([inputArr]).T, 0.01, 0.01, 0.001, 0.95, 0.2, 0.8, 0.5, 0.01)
+    a.simStep(reward, 0.5, 0.98, 0.1, 0.1, np.matrix([inputArr]).T, 0.1, 0.1, 0.001, 0.95, 0.01)
 
     prevReward = reward
 
@@ -133,6 +133,8 @@ while not done:
         punishmentTimer -= 1.0
 
     paddleX = np.minimum(1.0, np.maximum(0.0, paddleX + 0.15 * a.getActions().item(0)))
+
+    print(a.getActions().item(0))
 
     # Render
     display.fill((255,255,255))
