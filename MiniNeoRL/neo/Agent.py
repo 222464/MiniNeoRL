@@ -78,7 +78,7 @@ class Agent:
             else:
                 self._layers[rl].downPass(np.matrix([[ 0 ]]), rl != 0)
 
-        # Get PVi, LVe, LVi
+        # Get Q
         q = 0.0
 
         if len(self._layers) > 1:
@@ -103,11 +103,11 @@ class Agent:
             predInputArr.append(input.item(i))
 
         for i in range(0, self._numActions):
-                predInputArr.append(self._actionsExploratory.item(i))
+            predInputArr.append(self._actionsExploratory.item(i))
 
         predInput = np.matrix([ predInputArr ]).T
 
-        reinforce = tdError > 0.0
+        reinforce = tdError + 1.0
 
         # Learn
         for l in range(0, len(self._layers)):
@@ -128,7 +128,7 @@ class Agent:
         for i in range(0, self._numActions):
             self._actions[i] = np.minimum(1.0, np.maximum(-1.0, self.getPrediction().item(self._numInputs + i)))
 
-            self._actionsExploratory[i] = np.minimum(1.0, np.maximum(-1.0, self._actions[i] + self._exploration))
+            self._actionsExploratory[i] = np.minimum(1.0, np.maximum(-1.0, self._actions[i] + np.random.normal() * exploration))
 
         self._prevValue = q.item(0)
 

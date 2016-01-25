@@ -20,7 +20,7 @@ encoderSize = 20
 numInputs = 1
 numActions = 1
 
-a = Agent(numInputs * encoderSize, numActions, [ 200 ], -0.1, 0.1, 0.02)
+a = Agent(numInputs * encoderSize, numActions, [ 100 ], -0.1, 0.1, 0.05)
 
 averageReward = 0.0
 
@@ -121,9 +121,9 @@ while not done:
 
     reward = dir * paddleX * 0.01
 
-    reward = -np.abs(paddleX - ballPosition[0])
+    reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.5, 0.98, 0.1, 0.1, np.matrix([inputArr]).T, 0.01, 0.01, 0.005, 0.95, 0.01)
+    a.simStep(reward, 0.001, 0.98, 0.2, 0.1, np.matrix([inputArr]).T, 0.01, 0.01, 0.01, 0.95, 0.01)
 
     prevReward = reward
 
