@@ -121,9 +121,9 @@ while not done:
 
     reward = dir * paddleX * 0.01
 
-    reward = np.abs(paddleX - ballPosition[0]) < 0.1
+    reward = -np.abs(paddleX - ballPosition[0])
 
-    a.simStep(reward, 0.5, 0.98, 0.1, 0.1, np.matrix([inputArr]).T, 0.1, 0.1, 0.001, 0.95, 0.01)
+    a.simStep(reward, 0.5, 0.98, 0.1, 0.1, np.matrix([inputArr]).T, 0.01, 0.01, 0.005, 0.95, 0.01)
 
     prevReward = reward
 
