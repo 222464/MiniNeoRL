@@ -16,9 +16,9 @@ paddleX = 0.5
 ballRadius = 16.0 / displayWidth
 paddleRadius = 64.0 / displayWidth
 
-encoderSize = 20
-numInputs = 1
-numActions = 1
+encoderSize = 10
+numInputs = 5
+numActions = 4
 
 a = Agent(numInputs * encoderSize, numActions, [ 100 ], -0.1, 0.1, 0.05)
 
@@ -44,7 +44,7 @@ done = False
 
 dir = 1.0
 
-timer = 0.0
+#timer = 0.0
 
 while not done:
     for event in pygame.event.get():
@@ -58,10 +58,10 @@ while not done:
                 dir = 1.0
 
     # Update physics
-    #ballPosition += ballVelocity
-    timer += 1.0
-    ballPosition[0] = np.sin(timer * 0.05) * 0.5 + 0.5
-    ballPosition[1] = 0.5
+    ballPosition += ballVelocity
+    #timer += 1.0
+    #ballPosition[0] = np.sin(timer * 0.05) * 0.5 + 0.5
+    #ballPosition[1] = 0.5
 
     if ballPosition[0] < 0.0:
         ballPosition[0] = 0.0
@@ -95,12 +95,12 @@ while not done:
 
     reward = (rewardTimer > 0.0) - (punishmentTimer > 0.0)
 
-    reward = reward * 0.5 + 0.5
+    #reward = reward * 0.5 + 0.5
 
     averageReward = 0.99 * averageReward + 0.01 * reward
 
     # Control
-    inputs = [ paddleX * 2.0 - 1.0 ]#, ballPosition[0] * 2.0 - 1.0, ballPosition[1] * 2.0 - 1.0, ballVelocity[0] * 30.0, ballVelocity[1] * 30.0 ]
+    inputs = [ paddleX * 2.0 - 1.0, ballPosition[0] * 2.0 - 1.0, ballPosition[1] * 2.0 - 1.0, ballVelocity[0] * 30.0, ballVelocity[1] * 30.0 ]
 
     assert(len(inputs) == numInputs)
 
@@ -116,12 +116,9 @@ while not done:
 
             inputArr.append(intensity)
 
-    #print(inputArr)
-    #print(a._layers[0]._states)
+    #reward = dir * paddleX * 0.01
 
-    reward = dir * paddleX * 0.01
-
-    reward = np.abs(paddleX - ballPosition[0]) < 0.1
+    #reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
     a.simStep(reward, 0.001, 0.98, 0.2, 0.1, np.matrix([inputArr]).T, 0.01, 0.01, 0.01, 0.95, 0.01)
 
@@ -132,9 +129,7 @@ while not done:
     if punishmentTimer > 0.0:
         punishmentTimer -= 1.0
 
-    paddleX = np.minimum(1.0, np.maximum(0.0, paddleX + 0.15 * a.getActions().item(0)))
-
-    print(a.getActions().item(0))
+    paddleX = np.minimum(1.0, np.maximum(0.0, paddleX + 0.15 * np.sum(a.getActions()) * 0.25))
 
     # Render
     display.fill((255,255,255))
