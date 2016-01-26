@@ -100,7 +100,7 @@ class Agent:
 
         predInput = np.matrix([ predInputArr ]).T
 
-        reinforce = tdError / np.maximum(0.0001, self._averageAbsTDError) + 1.0
+        reinforce = np.absolute(tdError) * (tdError + 1.0) / np.maximum(0.0001, self._averageAbsTDError)
 
         self._averageAbsTDError = (1.0 - averageAbsTDErrorDecay) * self._averageAbsTDError + averageAbsTDErrorDecay * np.absolute(tdError)
 
