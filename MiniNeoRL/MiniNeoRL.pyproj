@@ -35,6 +35,9 @@
     <Compile Include="neo\Layer.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="neo\LayerRL.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="neo\" />

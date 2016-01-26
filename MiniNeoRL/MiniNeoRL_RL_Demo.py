@@ -16,11 +16,11 @@ paddleX = 0.5
 ballRadius = 16.0 / displayWidth
 paddleRadius = 64.0 / displayWidth
 
-encoderSize = 20
+encoderSize = 10
 numInputs = 5
 numActions = 3
 
-a = Agent(numInputs * encoderSize, numActions, [ 100 ], -0.1, 0.1, 0.05)
+a = Agent(numInputs * encoderSize, numActions, [ 50 ], -0.1, 0.1, 0.1)
 
 averageReward = 0.0
 
@@ -118,13 +118,13 @@ while not done:
 
             inputArr.append(intensity)
 
-    #reward = dir * paddleX * 0.01
+    reward = dir * paddleX * 0.01
 
     #reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.0005, 0.98, 0.15, 1.0, np.matrix([inputArr]).T, 0.001, 0.005, 0.0005, 0.95)
+    a.simStep(reward, 0.002, 0.98, 0.3, 0.1, np.matrix([inputArr]).T, 0.01, 0.02, 0.1, 0.005, 0.97)
 
-    #print(a._prevValue)
+    print(a.getActions())
 
     prevReward = reward
 

@@ -1,5 +1,5 @@
 import numpy as np
-from neo.Layer import Layer
+from neo.LayerRL import LayerRL
 
 class Agent:
     """A hierarchy of fully connected NeoRL layers that functions as a reinforcement learning agent"""
@@ -31,18 +31,18 @@ class Agent:
 
             if l == 0:
                 if l < len(layerSizes) - 1:
-                    layer = Layer(numInputs + numActions, layerSizes[l], layerSizes[l + 1], initMinWeight, initMaxWeight, activeRatio)
+                    layer = LayerRL(numInputs + numActions, layerSizes[l], layerSizes[l + 1], initMinWeight, initMaxWeight, activeRatio)
                 else:
-                    layer = Layer(numInputs + numActions, layerSizes[l], 1, initMinWeight, initMaxWeight, activeRatio)
+                    layer = LayerRL(numInputs + numActions, layerSizes[l], 1, initMinWeight, initMaxWeight, activeRatio)
             else:
                 if l < len(layerSizes) - 1:
-                    layer = Layer(layerSizes[l - 1], layerSizes[l], layerSizes[l + 1], initMinWeight, initMaxWeight, activeRatio)
+                    layer = LayerRL(layerSizes[l - 1], layerSizes[l], layerSizes[l + 1], initMinWeight, initMaxWeight, activeRatio)
                 else:
-                    layer = Layer(layerSizes[l - 1], layerSizes[l], 1, initMinWeight, initMaxWeight, activeRatio)
+                    layer = LayerRL(layerSizes[l - 1], layerSizes[l], 1, initMinWeight, initMaxWeight, activeRatio)
 
             self._layers.append(layer)
 
-    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
+    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay):
         assert(len(input) == self._numInputs)
 
         usedInputArr = []
@@ -100,20 +100,20 @@ class Agent:
 
         predInput = np.matrix([ predInputArr ]).T
 
-        reinforce = tdError > 0.0
+        reinforce = tdError
        
         # Learn
         for l in range(0, len(self._layers)):
             if l == 0:
                 if l < len(self._layers) - 1:
-                    self._layers[l].learnRL(reinforce, predInput, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, predInput, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
                 else:
-                    self._layers[l].learnRL(reinforce, predInput, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, predInput, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
             else:
                 if l < len(self._layers) - 1:
-                    self._layers[l].learnRL(reinforce, self._layers[l - 1]._states, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
                 else:
-                    self._layers[l].learnRL(reinforce, self._layers[l - 1]._states, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
 
         # Determine action
         self._exploration = (1.0 - explorationDecay) * self._exploration + explorationDecay * np.random.normal() * exploration
