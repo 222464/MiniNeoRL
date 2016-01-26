@@ -118,11 +118,11 @@ while not done:
 
             inputArr.append(intensity)
 
-    reward = dir * paddleX * 0.01
+    #reward = dir * paddleX * 0.01
 
     #reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.002, 0.98, 0.3, 0.1, np.matrix([inputArr]).T, 0.01, 0.02, 0.1, 0.005, 0.97)
+    a.simStep(reward, 0.001, 0.98, 0.15, 1.0, np.matrix([inputArr]).T, 0.01, 0.02, 0.1, 0.005, 0.97)
 
     print(a.getActions())
 
