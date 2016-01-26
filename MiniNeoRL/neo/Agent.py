@@ -42,7 +42,7 @@ class Agent:
 
             self._layers.append(layer)
 
-    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay, reinforceBias, averageAbsTDErrorDecay):
+    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
         assert(len(input) == self._numInputs)
 
         usedInputArr = []
@@ -100,10 +100,8 @@ class Agent:
 
         predInput = np.matrix([ predInputArr ]).T
 
-        reinforce = tdError / np.maximum(0.0001, self._averageAbsTDError) + reinforceBias
-
-        self._averageAbsTDError = (1.0 - averageAbsTDErrorDecay) * self._averageAbsTDError + averageAbsTDErrorDecay * np.absolute(tdError)
-
+        reinforce = tdError > 0.0
+       
         # Learn
         for l in range(0, len(self._layers)):
             if l == 0:

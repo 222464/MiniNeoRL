@@ -9,7 +9,7 @@ displayHeight = 600
 
 ballPosition = np.array([ np.random.rand(), np.random.rand() * 0.5 + 0.5 ])
 
-ballVelocity = np.array([ 0.653, 1.0 ]) * 0.04
+ballVelocity = np.array([ 0.353, 1.0 ]) * 0.04
 
 paddleX = 0.5
 
@@ -85,9 +85,9 @@ while not done:
             ballPosition = np.array([ np.random.rand(), np.random.rand() * 0.5 + 0.5 ])
 
             if np.random.rand() < 0.5:
-                ballVelocity = np.array([ 0.653, 1.0 ]) * 0.04
+                ballVelocity = np.array([ 0.353, 1.0 ]) * 0.04
             else:
-                ballVelocity = np.array([ -0.653, 1.0 ]) * 0.04
+                ballVelocity = np.array([ -0.353, 1.0 ]) * 0.04
 
     elif ballPosition[1] > 1.0:
         ballPosition[1] = 1.0
@@ -122,9 +122,9 @@ while not done:
 
     #reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.002, 0.98, 0.2, 0.1, np.matrix([inputArr]).T, 0.001, 0.001, 0.0005, 0.95, 0.04, 0.01)
+    a.simStep(reward, 0.0005, 0.98, 0.15, 1.0, np.matrix([inputArr]).T, 0.001, 0.005, 0.0005, 0.95)
 
-    print(a._prevValue)
+    #print(a._prevValue)
 
     prevReward = reward
 

@@ -76,8 +76,8 @@ class Layer:
         if thresholdedPred:
             self._predictions[self._predictions > 0.5] = 1.0
             self._predictions[self._predictions <= 0.5] = 0.0
-        #else:
-        #    self._predictions = np.tanh(self._predictions)
+        else:
+            self._predictions = np.tanh(self._predictions)
         
     def learn(self, target, feedBackPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
         # Find prediction error
@@ -119,8 +119,8 @@ class Layer:
         self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward - self._statesRecurrent, self._statesPrev.T)
 
         # Update predictive and feed back weights
-        self._predictiveTraces = self._predictiveTraces * traceDecay + np.dot(predError, self._statesPrev.T)
-        self._feedBackTraces = self._feedBackTraces * traceDecay + np.dot(predError, feedBackPrev.T)
+        self._predictiveTraces = np.multiply(1.0 - self._statesPrev.T, self._predictiveTraces) * traceDecay + np.dot(predError, self._statesPrev.T)
+        self._feedBackTraces = np.multiply(1.0 - feedBackPrev.T, self._feedBackTraces) * traceDecay + np.dot(predError, feedBackPrev.T)
 
         self._predictiveWeights += learnDecoderRate * reinforce * self._predictiveTraces
         self._feedBackWeights += learnDecoderRate * reinforce * self._feedBackTraces
