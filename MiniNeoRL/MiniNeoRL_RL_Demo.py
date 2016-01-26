@@ -18,7 +18,7 @@ paddleRadius = 64.0 / displayWidth
 
 encoderSize = 20
 numInputs = 5
-numActions = 8
+numActions = 3
 
 a = Agent(numInputs * encoderSize, numActions, [ 100 ], -0.1, 0.1, 0.05)
 
@@ -93,7 +93,7 @@ while not done:
         ballPosition[1] = 1.0
         ballVelocity[1] *= -1.0
 
-    reward = (rewardTimer > 0.0) - (punishmentTimer > 0.0)
+    reward = (rewardTimer > 0.0)# - (punishmentTimer > 0.0)
 
     #reward = reward * 0.5 + 0.5
 
@@ -122,7 +122,7 @@ while not done:
 
     #reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.001, 0.98, 0.1, 1.0, np.matrix([inputArr]).T, 0.001, 0.001, 0.0005, 0.95, 0.01)
+    a.simStep(reward, 0.002, 0.98, 0.2, 0.1, np.matrix([inputArr]).T, 0.001, 0.001, 0.0005, 0.95, 0.04, 0.01)
 
     print(a._prevValue)
 

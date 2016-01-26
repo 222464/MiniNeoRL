@@ -76,6 +76,8 @@ class Layer:
         if thresholdedPred:
             self._predictions[self._predictions > 0.5] = 1.0
             self._predictions[self._predictions <= 0.5] = 0.0
+        #else:
+        #    self._predictions = np.tanh(self._predictions)
         
     def learn(self, target, feedBackPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
         # Find prediction error
@@ -87,8 +89,8 @@ class Layer:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights
-        self._feedForwardWeights += learnEncoderRate * (np.dot(hiddenError.T, self._feedForwardTraces) + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
-        self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
+        self._feedForwardWeights += learnEncoderRate * (np.dot(reinforce * hiddenError.T, self._feedForwardTraces) + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
+        self._recurrentWeights += learnEncoderRate * np.dot(reinforce * hiddenError.T, self._recurrentTraces)
 
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
         self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrent, self._statesPrev.T)
@@ -110,15 +112,15 @@ class Layer:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights
-        self._feedForwardWeights += learnEncoderRate * (np.dot(reinforce * hiddenError.T, self._feedForwardTraces) + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
-        self._recurrentWeights += learnEncoderRate * np.dot(reinforce * hiddenError.T, self._recurrentTraces)
+        self._feedForwardWeights += learnEncoderRate * (np.dot(hiddenError.T, self._feedForwardTraces) + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
+        self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
 
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrent, self._statesPrev.T)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward - self._statesRecurrent, self._statesPrev.T)
 
         # Update predictive and feed back weights
-        self._predictiveTraces = np.multiply(1.0 - self._statesPrev.T, self._predictiveTraces) * traceDecay + np.dot(predError, self._statesPrev.T)
-        self._feedBackTraces = np.multiply(1.0 - feedBackPrev.T, self._feedBackTraces) * traceDecay + np.dot(predError, feedBackPrev.T)
+        self._predictiveTraces = self._predictiveTraces * traceDecay + np.dot(predError, self._statesPrev.T)
+        self._feedBackTraces = self._feedBackTraces * traceDecay + np.dot(predError, feedBackPrev.T)
 
         self._predictiveWeights += learnDecoderRate * reinforce * self._predictiveTraces
         self._feedBackWeights += learnDecoderRate * reinforce * self._feedBackTraces
