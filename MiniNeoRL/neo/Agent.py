@@ -1,15 +1,6 @@
 import numpy as np
 from neo.Layer import Layer
 
-class ReplaySample:
-    def __init__(self, states, feedBack, action, exploratoryAction, originalQ, newQ):
-        self._states = states
-        self._feedBack = feedBack
-        self._originalQ = originalQ
-        self._q = newQ
-        self._action = action
-        self._exploratoryAction = exploratoryAction
-
 class Agent:
     """A hierarchy of fully connected NeoRL layers that functions as a reinforcement learning agent"""
 
@@ -30,6 +21,8 @@ class Agent:
         self._qFeedBackWeights = np.random.rand(1, layerSizes[0])
         self._qFeedBackTraces = np.zeros((1, layerSizes[0]))
 
+        self._averageAbsTDError = 1.0
+
         self._prevValue = 0.0
 
         # Create layers
@@ -49,7 +42,7 @@ class Agent:
 
             self._layers.append(layer)
 
-    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay, replayAlpha):
+    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay, averageAbsTDErrorDecay):
         assert(len(input) == self._numInputs)
 
         usedInputArr = []
@@ -107,7 +100,9 @@ class Agent:
 
         predInput = np.matrix([ predInputArr ]).T
 
-        reinforce = tdError + 1.0
+        reinforce = tdError / np.maximum(0.0001, self._averageAbsTDError) + 1.0
+
+        self._averageAbsTDError = (1.0 - averageAbsTDErrorDecay) * self._averageAbsTDError + averageAbsTDErrorDecay * np.absolute(tdError)
 
         # Learn
         for l in range(0, len(self._layers)):
@@ -128,7 +123,7 @@ class Agent:
         for i in range(0, self._numActions):
             self._actions[i] = np.minimum(1.0, np.maximum(-1.0, self.getPrediction().item(self._numInputs + i)))
 
-            self._actionsExploratory[i] = np.minimum(1.0, np.maximum(-1.0, self._actions[i] + np.random.normal() * exploration))
+            self._actionsExploratory[i] = np.minimum(1.0, np.maximum(-1.0, self._actions[i] + self._exploration.item(i)))
 
         self._prevValue = q.item(0)
 
