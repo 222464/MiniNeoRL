@@ -18,9 +18,9 @@ paddleRadius = 64.0 / displayWidth
 
 encoderSize = 10
 numInputs = 5
-numActions = 3
+numActions = 1
 
-a = Agent(numInputs * encoderSize, numActions, [ 50 ], -0.1, 0.1, 0.1)
+a = Agent(numInputs * encoderSize, numActions, [ 200 ], -0.1, 0.1, 0.04)
 
 averageReward = 0.0
 
@@ -44,7 +44,7 @@ done = False
 
 dir = 1.0
 
-#timer = 0.0
+timer = 0.0
 
 while not done:
     for event in pygame.event.get():
@@ -118,11 +118,11 @@ while not done:
 
             inputArr.append(intensity)
 
-    #reward = dir * paddleX * 0.01
+    reward = dir * paddleX * 0.01
 
     #reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.001, 0.98, 0.15, 1.0, np.matrix([inputArr]).T, 0.01, 0.02, 0.1, 0.005, 0.97)
+    a.simStep(reward, 0.002, 0.95, 0.12, 1.0, np.matrix([inputArr]).T, 0.01, 0.01, 0.0005, 0.92)
 
     print(a.getActions())
 

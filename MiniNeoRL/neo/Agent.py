@@ -1,4 +1,5 @@
 import numpy as np
+from neo.Layer import Layer
 from neo.LayerRL import LayerRL
 
 class Agent:
@@ -13,8 +14,6 @@ class Agent:
         self._actions = np.zeros((numActions, 1))
         self._actionsExploratory = np.zeros((numActions, 1))
 
-        self._exploration = np.zeros((numActions, 1))
-
         self._qPredictiveWeights = np.random.rand(1, layerSizes[0])
         self._qPredictiveTraces = np.zeros((1, layerSizes[0]))
 
@@ -22,6 +21,16 @@ class Agent:
         self._qFeedBackTraces = np.zeros((1, layerSizes[0]))
 
         self._averageAbsTDError = 1.0
+
+        mask = []
+
+        for i in range(0, self._numInputs):
+            mask.append(0.0)
+
+        for i in range(0, self._numActions):
+            mask.append(1.0)
+
+        self._actionMask = np.matrix([mask]).T
 
         self._prevValue = 0.0
 
@@ -42,7 +51,7 @@ class Agent:
 
             self._layers.append(layer)
 
-    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay):
+    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
         assert(len(input) == self._numInputs)
 
         usedInputArr = []
@@ -67,9 +76,15 @@ class Agent:
             rl = len(self._layers) - 1 - l
 
             if rl < len(self._layers) - 1:
-                self._layers[rl].downPass(self._layers[rl + 1]._predictions, rl != 0)
+                if l == 0:
+                    self._layers[rl].downPass(self._layers[rl + 1]._predictions, False)
+                else:
+                    self._layers[rl].downPass(self._layers[rl + 1]._predictions, True)
             else:
-                self._layers[rl].downPass(np.matrix([[ 0 ]]), rl != 0)
+                if l == 0:
+                    self._layers[rl].downPass(np.matrix([[ 0 ]]), False)
+                else:
+                    self._layers[rl].downPass(np.matrix([[ 0 ]]), True)
 
         # Get Q
         q = 0.0
@@ -90,38 +105,39 @@ class Agent:
 
             self._qFeedBackTraces = self._qFeedBackTraces * traceDecay + self._layers[1]._predictions.T
 
-        predInputArr = []
+        predInputExpArr = []
 
         for i in range(0, self._numInputs):
-            predInputArr.append(input.item(i))
+            predInputExpArr.append(input.item(i))
 
         for i in range(0, self._numActions):
-            predInputArr.append(self._actionsExploratory.item(i))
+            predInputExpArr.append(self._actionsExploratory.item(i))
 
-        predInput = np.matrix([ predInputArr ]).T
+        predInputExp = np.matrix([ predInputExpArr ]).T
 
-        reinforce = tdError
-       
+        reinforce = np.sign(tdError) * 0.5 + 0.5
+
         # Learn
         for l in range(0, len(self._layers)):
             if l == 0:
                 if l < len(self._layers) - 1:
-                    self._layers[l].learn(reinforce, predInput, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, predInputExp, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
                 else:
-                    self._layers[l].learn(reinforce, predInput, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, predInputExp, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
             else:
                 if l < len(self._layers) - 1:
-                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
                 else:
-                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnActionRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
 
         # Determine action
-        self._exploration = (1.0 - explorationDecay) * self._exploration + explorationDecay * np.random.normal() * exploration
-
         for i in range(0, self._numActions):
             self._actions[i] = np.minimum(1.0, np.maximum(-1.0, self.getPrediction().item(self._numInputs + i)))
 
-            self._actionsExploratory[i] = np.minimum(1.0, np.maximum(-1.0, self._actions[i] + self._exploration.item(i)))
+            if np.random.rand() < exploration:
+                self._actionsExploratory[i] = np.random.rand() * 2.0 - 1.0
+            else:
+                self._actionsExploratory[i] = self._actions[i]
 
         self._prevValue = q.item(0)
 
