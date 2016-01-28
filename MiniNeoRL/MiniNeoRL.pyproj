@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>a42870a8-744b-43f5-83dd-8308a6cb211d</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>MiniNeoRL_RL_Demo.py</StartupFile>
+    <StartupFile>MiniNeoRL_Pred_Demo.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

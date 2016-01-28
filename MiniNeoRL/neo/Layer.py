@@ -20,6 +20,8 @@ class Layer:
         self._biases = np.zeros((numHidden, 1))#np.random.rand(numHidden, 1) * (initMaxWeight - initMinWeight) + initMinWeight
 
         self._statesRecurrent = np.zeros((numHidden, 1))
+        self._statesRecurrentPrev = np.zeros((numHidden, 1))
+
         self._statesFeedForward = np.zeros((numHidden, 1))
 
         self._states = np.zeros((numHidden, 1))
@@ -36,6 +38,7 @@ class Layer:
     def upPass(self, input):
         self._input = input
         self._statesPrev = self._states
+        self._statesRecurrentPrev = self._statesRecurrent
 
         numActive = int(self._activeRatio * len(self._states))
   
@@ -85,11 +88,11 @@ class Layer:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights
-        self._feedForwardWeights += learnEncoderRate * (np.dot(hiddenError.T, self._feedForwardTraces) + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
-        self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
-
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrent, self._statesPrev.T)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrentPrev, self._statesPrev.T)
+
+        self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
+        self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
 
         # Update predictive and feed back weights
         self._predictiveWeights += learnDecoderRate * np.dot(predError, self._statesPrev.T)
