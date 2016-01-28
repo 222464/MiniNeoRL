@@ -33,6 +33,8 @@ class Layer:
         self._predictions = np.zeros((numInputs, 1))
         self._predictionsPrev = np.zeros((numInputs, 1))
 
+        self._averageSquaredError = np.zeros((numHidden, 1))
+
         self._activeRatio = activeRatio
 
     def upPass(self, input):
@@ -78,7 +80,7 @@ class Layer:
             self._predictions[self._predictions > 0.5] = 1.0
             self._predictions[self._predictions <= 0.5] = 0.0
 
-    def learn(self, target, feedBackPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
+    def learn(self, target, feedBackPrev, learnEncoderRate, learnRecurrentRate, learnDecoderRate, learnBiasRate, traceDecay):
         # Find prediction error
         predError = target - self._predictionsPrev
 
@@ -87,13 +89,16 @@ class Layer:
 
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
-        # Update feed forward and recurrent weights
-        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrentPrev, self._statesPrev.T)
+        squaredError = np.square(hiddenError)
 
+        # Update feed forward and recurrent weights
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrentPrev, self._statesPrev.T)
+         
         self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
         self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
 
+        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights)
+        
         # Update predictive and feed back weights
         self._predictiveWeights += learnDecoderRate * np.dot(predError, self._statesPrev.T)
         self._feedBackWeights += learnDecoderRate * np.dot(predError, feedBackPrev.T)

@@ -40,18 +40,18 @@ class Agent:
 
             if l == 0:
                 if l < len(layerSizes) - 1:
-                    layer = LayerRL(numInputs + numActions, layerSizes[l], layerSizes[l + 1], initMinWeight, initMaxWeight, activeRatio)
+                    layer = LayerRL(numInputs + numActions, layerSizes[l], layerSizes[l], initMinWeight, initMaxWeight, activeRatio)
                 else:
                     layer = LayerRL(numInputs + numActions, layerSizes[l], 1, initMinWeight, initMaxWeight, activeRatio)
             else:
                 if l < len(layerSizes) - 1:
-                    layer = LayerRL(layerSizes[l - 1], layerSizes[l], layerSizes[l + 1], initMinWeight, initMaxWeight, activeRatio)
+                    layer = LayerRL(layerSizes[l - 1], layerSizes[l], layerSizes[l], initMinWeight, initMaxWeight, activeRatio)
                 else:
                     layer = LayerRL(layerSizes[l - 1], layerSizes[l], 1, initMinWeight, initMaxWeight, activeRatio)
 
             self._layers.append(layer)
 
-    def simStep(self, reward, qAlpha, qGamma, exploration, explorationDecay, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay):
+    def simStep(self, reward, qAlpha, qGamma, exploration, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay, reinforceBias):
         assert(len(input) == self._numInputs)
 
         usedInputArr = []
@@ -115,7 +115,7 @@ class Agent:
 
         predInputExp = np.matrix([ predInputExpArr ]).T
 
-        reinforce = np.sign(tdError) * 0.5 + 0.5
+        reinforce = tdError + reinforceBias
 
         # Learn
         for l in range(0, len(self._layers)):

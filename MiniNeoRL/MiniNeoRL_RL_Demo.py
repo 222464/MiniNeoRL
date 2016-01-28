@@ -59,9 +59,9 @@ while not done:
 
     # Update physics
     ballPosition += ballVelocity
-    #timer += 1.0
-    #ballPosition[0] = np.sin(timer * 0.05) * 0.5 + 0.5
-    #ballPosition[1] = 0.5
+    timer += 1.0
+    ballPosition[0] = np.sin(timer * 0.05) * 0.5 + 0.5
+    ballPosition[1] = 0.5
 
     if ballPosition[0] < 0.0:
         ballPosition[0] = 0.0
@@ -118,13 +118,13 @@ while not done:
 
             inputArr.append(intensity)
 
-    reward = dir * paddleX * 0.01
+    #reward = dir * paddleX * 0.01
 
-    #reward = np.abs(paddleX - ballPosition[0]) < 0.1
+    reward = np.abs(paddleX - ballPosition[0]) < 0.1
 
-    a.simStep(reward, 0.002, 0.95, 0.12, 1.0, np.matrix([inputArr]).T, 0.01, 0.01, 0.0005, 0.92)
+    a.simStep(reward, 0.001, 0.95, 0.02, np.matrix([inputArr]).T, 0.001, 0.005, 0.0005, 0.92, 0.05)
 
-    print(a.getActions())
+    print(a._prevValue)
 
     prevReward = reward
 

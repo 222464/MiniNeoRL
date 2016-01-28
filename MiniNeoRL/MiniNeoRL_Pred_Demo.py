@@ -24,15 +24,35 @@ sequence = [
         [ 0.0, 1.0, 1.0, 0.0 ],
         [ 0.0, 0.0, 0.0, 1.0 ],
         [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 0.0, 0.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 1.0, 0.0 ],
+        [ 0.0, 0.0, 0.0, 1.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 0.0, 0.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 1.0, 0.0 ],
+        [ 0.0, 0.0, 0.0, 1.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 0.0, 0.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
+        [ 0.0, 1.0, 1.0, 0.0 ],
+        [ 0.0, 0.0, 0.0, 1.0 ],
+        [ 1.0, 0.0, 0.0, 0.0 ],
         [ 0.0, 1.0, 0.0, 0.0 ]
     ]
 
-h = Hierarchy(4, [ 100 ], -0.01, 0.01, 0.02)
+h = Hierarchy(4, [ 50 ], -0.01, 0.01, 0.1)
 
 averageError = 0
 
 for i in range(0, 10000):
-    h.simStep(np.matrix([sequence[i % len(sequence)]]).T, 0.05, 0.2, 0.01, 0.95)
+    h.simStep(np.matrix([sequence[i % len(sequence)]]).T, 0.1, 0.01, 0.01, 0.001, 0.95)
 
     error = None
 
@@ -43,6 +63,6 @@ for i in range(0, 10000):
 
     averageError = 0.99 * averageError + 0.01 * error
 
-    print(h._layers[0]._states)
+    #print(h._layers[0]._states)
 
     print(str(i % 4) + str(np.matrix([sequence[i % len(sequence)]]).T.ravel()) + " " + str(np.greater(h.getPrediction(), 0.5).ravel()) + " Error: " + str(error) + " Average Error: " + str(averageError))
