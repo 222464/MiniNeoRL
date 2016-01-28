@@ -47,7 +47,7 @@ sequence = [
         [ 0.0, 1.0, 0.0, 0.0 ]
     ]
 
-h = Hierarchy(4, [ 50 ], -0.01, 0.01, 0.1)
+h = Hierarchy(4, [ 40, 40, 40 ], -0.01, 0.01, 0.1)
 
 averageError = 0
 

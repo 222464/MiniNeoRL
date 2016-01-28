@@ -92,7 +92,7 @@ class Layer:
         squaredError = np.square(hiddenError)
 
         # Update feed forward and recurrent weights
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states - self._statesRecurrentPrev, self._statesPrev.T)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states, self._statesPrev.T)
          
         self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
         self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
