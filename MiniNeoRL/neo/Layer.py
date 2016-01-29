@@ -66,9 +66,7 @@ class Layer:
 
         for i in range(0, numActive):
             self._statesFeedForward[feedForwardActivationsPairs[len(feedForwardActivationsPairs) - 1 - i][1]] = 1.0
-
-        self._states = np.maximum(self._statesFeedForward, self._statesRecurrentPrev)
-        
+ 
         recurrentActivations = np.dot(self._recurrentWeights, self._states)
 
         # Generate tuples for sorting
@@ -85,6 +83,8 @@ class Layer:
         
         for i in range(0, numActive):
             self._statesRecurrent[recurrentActivationsPairs[len(recurrentActivationsPairs) - 1 - i][1]] = 1.0
+
+        self._states = np.maximum(self._statesFeedForward, self._statesRecurrent)
            
     def downPass(self, feedBack, thresholdedPred = True):
         self._predictionsPrev = self._predictions
@@ -106,10 +106,11 @@ class Layer:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights 
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward, self._statesPrev.T)
+        
         self._feedForwardWeights += learnEncoderRate * np.dot(hiddenError.T, self._feedForwardTraces)
         self._recurrentWeights += learnRecurrentRate * np.dot(hiddenError.T, self._recurrentTraces)
 
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward, self._statesPrev.T)
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._statesFeedForward, self._input.T)
         
         # Update predictive and feed back weights

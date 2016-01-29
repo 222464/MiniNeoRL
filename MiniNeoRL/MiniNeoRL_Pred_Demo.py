@@ -47,12 +47,12 @@ sequence = [
         [ 0.0, 1.0, 0.0, 0.0 ]
     ]
 
-h = Hierarchy(4, [ 30, 30, 30 ], -0.01, 0.01, 0.1)
+h = Hierarchy(4, [ 60, 60, 60 ], -0.01, 0.01, 0.1)
 
 averageError = 0
 
 for i in range(0, 10000):
-    h.simStep(np.matrix([sequence[i % len(sequence)]]).T, 0.01, 0.01, 0.01, 0.001, 0.95)
+    h.simStep(np.matrix([sequence[i % len(sequence)]]).T, 0.01, 0.01, 0.01, 0.002, 0.95)
 
     error = None
 
