@@ -6,6 +6,7 @@ class Layer:
 
     def __init__(self, numInputs, numHidden, numFeedBack, initMinWeight, initMaxWeight, activeRatio):
         self._input = np.zeros((numInputs, 1))
+        self._inputPrev = np.zeros((numInputs, 1))
 
         self._feedForwardWeights = np.random.rand(numHidden, numInputs) * (initMaxWeight - initMinWeight) + initMinWeight
         self._feedForwardTraces = np.zeros((numHidden, numInputs))
@@ -38,38 +39,53 @@ class Layer:
         self._activeRatio = activeRatio
 
     def upPass(self, input):
+        self._inputPrev = self._input
+
         self._input = input
+
         self._statesPrev = self._states
+
         self._statesRecurrentPrev = self._statesRecurrent
 
         numActive = int(self._activeRatio * len(self._states))
   
         # Activate
-        recurrentActivations = np.dot(self._recurrentWeights, self._statesPrev)
         feedForwardActivations = self._biases + np.dot(self._feedForwardWeights, input)
        
         # Generate tuples for sorting
-        recurrentActivationsPairs = []
         feedForwardActivationsPairs = []
 
         for i in range(0, len(self._states)):
-            recurrentActivationsPairs.append((recurrentActivations[i], i))
             feedForwardActivationsPairs.append((feedForwardActivations[i], i))
 
         # Sort
-        recurrentActivationsPairs = sorted(recurrentActivationsPairs, key=itemgetter(0))
         feedForwardActivationsPairs = sorted(feedForwardActivationsPairs, key=itemgetter(0))
 
         # Use sorted information for inhibition
-        self._statesRecurrent = np.zeros((len(self._states), 1))
         self._statesFeedForward = np.zeros((len(self._states), 1))
 
         for i in range(0, numActive):
-            self._statesRecurrent[recurrentActivationsPairs[len(recurrentActivationsPairs) - 1 - i][1]] = 1.0
             self._statesFeedForward[feedForwardActivationsPairs[len(feedForwardActivationsPairs) - 1 - i][1]] = 1.0
 
-        self._states = np.maximum(self._statesFeedForward, self._statesRecurrent)
+        self._states = np.maximum(self._statesFeedForward, self._statesRecurrentPrev)
+        
+        recurrentActivations = np.dot(self._recurrentWeights, self._states)
 
+        # Generate tuples for sorting
+        recurrentActivationsPairs = []
+        
+        for i in range(0, len(self._states)):
+            recurrentActivationsPairs.append((recurrentActivations[i], i))
+            
+        # Sort
+        recurrentActivationsPairs = sorted(recurrentActivationsPairs, key=itemgetter(0))
+        
+        # Use sorted information for inhibition
+        self._statesRecurrent = np.zeros((len(self._states), 1))
+        
+        for i in range(0, numActive):
+            self._statesRecurrent[recurrentActivationsPairs[len(recurrentActivationsPairs) - 1 - i][1]] = 1.0
+           
     def downPass(self, feedBack, thresholdedPred = True):
         self._predictionsPrev = self._predictions
 
@@ -89,19 +105,16 @@ class Layer:
 
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
-        squaredError = np.square(hiddenError)
+        # Update feed forward and recurrent weights 
+        self._feedForwardWeights += learnEncoderRate * np.dot(hiddenError.T, self._feedForwardTraces)
+        self._recurrentWeights += learnRecurrentRate * np.dot(hiddenError.T, self._recurrentTraces)
 
-        # Update feed forward and recurrent weights
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states, self._statesPrev.T)
-         
-        self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
-        self._recurrentWeights += learnEncoderRate * np.dot(hiddenError.T, self._recurrentTraces)
-
-        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward, self._statesPrev.T)
+        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._statesFeedForward, self._input.T)
         
         # Update predictive and feed back weights
         self._predictiveWeights += learnDecoderRate * np.dot(predError, self._statesPrev.T)
         self._feedBackWeights += learnDecoderRate * np.dot(predError, feedBackPrev.T)
 
         # Update thresholds
-        self._biases += learnBiasRate * (self._activeRatio - self._states)
+        self._biases += learnBiasRate * (self._activeRatio - self._statesFeedForward)

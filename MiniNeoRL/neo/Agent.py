@@ -51,7 +51,7 @@ class Agent:
 
             self._layers.append(layer)
 
-    def simStep(self, reward, qAlpha, qGamma, exploration, input, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay, reinforceBias):
+    def simStep(self, reward, qAlpha, qGamma, exploration, input, learnEncoderRate, learnRecurrentRate, learnDecoderRate, learnBiasRate, traceDecay):
         assert(len(input) == self._numInputs)
 
         usedInputArr = []
@@ -115,20 +115,20 @@ class Agent:
 
         predInputExp = np.matrix([ predInputExpArr ]).T
 
-        reinforce = tdError + reinforceBias
+        reinforce = np.sign(tdError) * 0.5 + 0.5
 
         # Learn
         for l in range(0, len(self._layers)):
             if l == 0:
                 if l < len(self._layers) - 1:
-                    self._layers[l].learn(reinforce, predInputExp, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, predInputExp, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnRecurrentRate, learnDecoderRate, learnBiasRate, traceDecay)
                 else:
-                    self._layers[l].learn(reinforce, predInputExp, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, predInputExp, np.matrix([[ 0 ]]), learnEncoderRate, learnRecurrentRate, learnDecoderRate, learnBiasRate, traceDecay)
             else:
                 if l < len(self._layers) - 1:
-                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, self._layers[l + 1]._predictionsPrev, learnEncoderRate, learnRecurrentRate, learnDecoderRate, learnBiasRate, traceDecay)
                 else:
-                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, np.matrix([[ 0 ]]), learnEncoderRate, learnDecoderRate, learnBiasRate, traceDecay)
+                    self._layers[l].learn(reinforce, self._layers[l - 1]._states, np.matrix([[ 0 ]]), learnEncoderRate, learnRecurrentRate, learnDecoderRate, learnBiasRate, traceDecay)
 
         # Determine action
         for i in range(0, self._numActions):
