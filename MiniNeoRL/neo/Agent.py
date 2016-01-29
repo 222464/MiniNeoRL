@@ -76,12 +76,12 @@ class Agent:
             rl = len(self._layers) - 1 - l
 
             if rl < len(self._layers) - 1:
-                if l == 0:
+                if rl == 0:
                     self._layers[rl].downPass(self._layers[rl + 1]._predictions, False)
                 else:
                     self._layers[rl].downPass(self._layers[rl + 1]._predictions, True)
             else:
-                if l == 0:
+                if rl == 0:
                     self._layers[rl].downPass(np.matrix([[ 0 ]]), False)
                 else:
                     self._layers[rl].downPass(np.matrix([[ 0 ]]), True)

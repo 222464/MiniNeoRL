@@ -8,10 +8,12 @@ class LayerRL:
         self._input = np.zeros((numInputs, 1))
 
         self._feedForwardWeights = np.random.rand(numHidden, numInputs) * (initMaxWeight - initMinWeight) + initMinWeight
-        self._feedForwardTraces = np.zeros((numHidden, numInputs))
-
+ 
         self._recurrentWeights = np.random.rand(numHidden, numHidden) * (initMaxWeight - initMinWeight) + initMinWeight
-        self._recurrentTraces = np.zeros((numHidden, numHidden))
+
+        self._stateTraces = np.zeros((numHidden, 1))
+
+        self._inputTraces = np.zeros((numInputs, 1))
 
         self._predictiveWeights = np.random.rand(numInputs, numHidden) * (initMaxWeight - initMinWeight) + initMinWeight
         self._predictiveTraces = np.zeros((numInputs, numHidden))
@@ -45,7 +47,7 @@ class LayerRL:
         numActive = int(self._activeRatio * len(self._states))
   
         # Activate
-        activations = self._biases + np.dot(self._feedForwardWeights, input)
+        activations = self._biases + np.dot(self._feedForwardWeights, input) + np.dot(self._recurrentWeights, self._statesPrev)
        
         # Generate tuples for sorting
         activationsPairs = []
@@ -84,12 +86,11 @@ class LayerRL:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights 
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights)
-        
-        self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
-        self._recurrentWeights += learnRecurrentRate * (np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights))
+        self._inputTraces = self._inputTraces * traceDecay + self._input
+        self._stateTraces = self._stateTraces * traceDecay + self._statesPrev
 
-        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights)
+        self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._inputTraces.T) - np.dot(self._states.T, self._feedForwardWeights))
+        self._recurrentWeights += learnRecurrentRate * (np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights))
         
         # Update predictive and feed back weights
         self._predictiveTraces = self._predictiveTraces * traceDecay + np.dot(predErrorExp, self._statesPrev.T)
