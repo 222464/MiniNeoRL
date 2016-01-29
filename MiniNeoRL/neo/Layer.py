@@ -20,11 +20,6 @@ class Layer:
 
         self._biases = np.zeros((numHidden, 1))#np.random.rand(numHidden, 1) * (initMaxWeight - initMinWeight) + initMinWeight
 
-        self._statesRecurrent = np.zeros((numHidden, 1))
-        self._statesRecurrentPrev = np.zeros((numHidden, 1))
-
-        self._statesFeedForward = np.zeros((numHidden, 1))
-
         self._states = np.zeros((numHidden, 1))
         self._statesPrev = np.zeros((numHidden, 1))
 
@@ -45,47 +40,26 @@ class Layer:
 
         self._statesPrev = self._states
 
-        self._statesRecurrentPrev = self._statesRecurrent
-
         numActive = int(self._activeRatio * len(self._states))
   
         # Activate
-        feedForwardActivations = self._biases + np.dot(self._feedForwardWeights, input)
+        activations = self._biases + np.dot(self._feedForwardWeights, input)
        
         # Generate tuples for sorting
-        feedForwardActivationsPairs = []
+        activationsPairs = []
 
         for i in range(0, len(self._states)):
-            feedForwardActivationsPairs.append((feedForwardActivations[i], i))
+            activationsPairs.append((activations[i], i))
 
         # Sort
-        feedForwardActivationsPairs = sorted(feedForwardActivationsPairs, key=itemgetter(0))
+        activationsPairs = sorted(activationsPairs, key=itemgetter(0))
 
         # Use sorted information for inhibition
-        self._statesFeedForward = np.zeros((len(self._states), 1))
+        self._states = np.zeros((len(self._states), 1))
 
         for i in range(0, numActive):
-            self._statesFeedForward[feedForwardActivationsPairs[len(feedForwardActivationsPairs) - 1 - i][1]] = 1.0
+            self._states[activationsPairs[len(activationsPairs) - 1 - i][1]] = 1.0
  
-        recurrentActivations = np.dot(self._recurrentWeights, self._states)
-
-        # Generate tuples for sorting
-        recurrentActivationsPairs = []
-        
-        for i in range(0, len(self._states)):
-            recurrentActivationsPairs.append((recurrentActivations[i], i))
-            
-        # Sort
-        recurrentActivationsPairs = sorted(recurrentActivationsPairs, key=itemgetter(0))
-        
-        # Use sorted information for inhibition
-        self._statesRecurrent = np.zeros((len(self._states), 1))
-        
-        for i in range(0, numActive):
-            self._statesRecurrent[recurrentActivationsPairs[len(recurrentActivationsPairs) - 1 - i][1]] = 1.0
-
-        self._states = np.maximum(self._statesFeedForward, self._statesRecurrent)
-           
     def downPass(self, feedBack, thresholdedPred = True):
         self._predictionsPrev = self._predictions
 
@@ -106,16 +80,16 @@ class Layer:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights 
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._statesFeedForward, self._statesPrev.T)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.repeat(self._statesPrev, len(self._states), 1)
         
         self._feedForwardWeights += learnEncoderRate * np.dot(hiddenError.T, self._feedForwardTraces)
         self._recurrentWeights += learnRecurrentRate * np.dot(hiddenError.T, self._recurrentTraces)
 
-        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._statesFeedForward, self._input.T)
+        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
         
         # Update predictive and feed back weights
         self._predictiveWeights += learnDecoderRate * np.dot(predError, self._statesPrev.T)
         self._feedBackWeights += learnDecoderRate * np.dot(predError, feedBackPrev.T)
 
         # Update thresholds
-        self._biases += learnBiasRate * (self._activeRatio - self._statesFeedForward)
+        self._biases += learnBiasRate * (self._activeRatio - self._states)
