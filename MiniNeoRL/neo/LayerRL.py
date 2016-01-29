@@ -45,30 +45,22 @@ class LayerRL:
         numActive = int(self._activeRatio * len(self._states))
   
         # Activate
-        recurrentActivations = np.dot(self._recurrentWeights, self._statesPrev)
-        feedForwardActivations = self._biases + np.dot(self._feedForwardWeights, input)
+        activations = self._biases + np.dot(self._feedForwardWeights, input)
        
         # Generate tuples for sorting
-        recurrentActivationsPairs = []
-        feedForwardActivationsPairs = []
+        activationsPairs = []
 
         for i in range(0, len(self._states)):
-            recurrentActivationsPairs.append((recurrentActivations[i], i))
-            feedForwardActivationsPairs.append((feedForwardActivations[i], i))
+            activationsPairs.append((activations[i], i))
 
         # Sort
-        recurrentActivationsPairs = sorted(recurrentActivationsPairs, key=itemgetter(0))
-        feedForwardActivationsPairs = sorted(feedForwardActivationsPairs, key=itemgetter(0))
+        activationsPairs = sorted(activationsPairs, key=itemgetter(0))
 
         # Use sorted information for inhibition
-        self._statesRecurrent = np.zeros((len(self._states), 1))
-        self._statesFeedForward = np.zeros((len(self._states), 1))
+        self._states = np.zeros((len(self._states), 1))
 
         for i in range(0, numActive):
-            self._statesRecurrent[recurrentActivationsPairs[len(recurrentActivationsPairs) - 1 - i][1]] = 1.0
-            self._statesFeedForward[feedForwardActivationsPairs[len(feedForwardActivationsPairs) - 1 - i][1]] = 1.0
-
-        self._states = np.maximum(self._statesFeedForward, self._statesRecurrent)
+            self._states[activationsPairs[len(activationsPairs) - 1 - i][1]] = 1.0
 
     def downPass(self, feedBack, thresholdedPred = True):
         self._predictionsPrev = self._predictions
@@ -91,14 +83,14 @@ class LayerRL:
 
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
-        # Update feed forward and recurrent weights
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states, self._statesPrev.T)
-         
+        # Update feed forward and recurrent weights 
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights)
+        
         self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
-        self._recurrentWeights += learnRecurrentRate * np.dot(hiddenError.T, self._recurrentTraces)
+        self._recurrentWeights += learnRecurrentRate * (np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights))
 
         self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights)
-
+        
         # Update predictive and feed back weights
         self._predictiveTraces = self._predictiveTraces * traceDecay + np.dot(predErrorExp, self._statesPrev.T)
         self._feedBackTraces = self._feedBackTraces * traceDecay + np.dot(predErrorExp, feedBackPrev.T)

@@ -43,7 +43,7 @@ class Layer:
         numActive = int(self._activeRatio * len(self._states))
   
         # Activate
-        activations = self._biases + np.dot(self._feedForwardWeights, input)
+        activations = self._biases + np.dot(self._feedForwardWeights, input) + np.dot(self._recurrentWeights, self._statesPrev)
        
         # Generate tuples for sorting
         activationsPairs = []
@@ -80,12 +80,12 @@ class Layer:
         hiddenError = np.multiply(hiddenError, self._statesPrev)
 
         # Update feed forward and recurrent weights 
-        self._recurrentTraces = self._recurrentTraces * traceDecay + np.repeat(self._statesPrev, len(self._states), 1)
+        self._recurrentTraces = self._recurrentTraces * traceDecay + np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights)
         
-        self._feedForwardWeights += learnEncoderRate * np.dot(hiddenError.T, self._feedForwardTraces)
-        self._recurrentWeights += learnRecurrentRate * np.dot(hiddenError.T, self._recurrentTraces)
+        self._feedForwardWeights += learnEncoderRate * (np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights))
+        self._recurrentWeights += learnRecurrentRate * (np.dot(self._states, self._statesPrev.T) - np.dot(self._states.T, self._recurrentWeights))
 
-        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.repeat(self._input.T, len(self._states), 0)
+        self._feedForwardTraces = self._feedForwardTraces * traceDecay + np.dot(self._states, self._input.T) - np.dot(self._states.T, self._feedForwardWeights)
         
         # Update predictive and feed back weights
         self._predictiveWeights += learnDecoderRate * np.dot(predError, self._statesPrev.T)
